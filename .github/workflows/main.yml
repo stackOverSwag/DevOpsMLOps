@@ -26,4 +26,4 @@ jobs:
 
       # Builds the backend and runs unit/integration tests
       - name: Build and test with Maven
-        run: mvn clean verify --file ./simple-api/pom.xml
+        run: mvn clean verify --file ./simpleapi/pom.xml
