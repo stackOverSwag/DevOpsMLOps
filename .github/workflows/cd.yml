@@ -5,12 +5,10 @@ on:
     workflows: ["CI devops 2026"]
     types:
       - completed
-    branches:
-      - main
 
 jobs:
   build-and-push-docker-image:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-24.04
 
     steps:
@@ -31,27 +29,24 @@ jobs:
         with:
           context: ./simpleapi
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simpleapi:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simpleapi:latest
 
       - name: Build image and push database
         uses: docker/build-push-action@v6
         with:
           context: ./db
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
 
       - name: Build image and push httpd
         uses: docker/build-push-action@v6
         with:
           context: ./http-server
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
 
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-24.04
     needs: build-and-push-docker-image
 
@@ -69,7 +64,14 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          touch ~/.ssh/known_hosts
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo "SERVER_HOST secret is empty"
+            exit 1
+          fi
+
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Run Ansible deploy
         run: |
