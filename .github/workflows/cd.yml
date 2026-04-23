@@ -1,4 +1,4 @@
-name: CD docker image
+name: CD docker images
 
 on:
   workflow_dispatch:
