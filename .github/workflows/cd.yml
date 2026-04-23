@@ -46,6 +46,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-httpd:latest
 
+
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-24.04
@@ -66,14 +67,11 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           touch ~/.ssh/known_hosts
-
-          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
-            echo "SERVER_HOST secret is empty"
-            exit 1
-          fi
-
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Disable host key checking
+        run: echo "ANSIBLE_HOST_KEY_CHECKING=False" >> $GITHUB_ENV
 
       - name: Run Ansible deploy
         run: |
-          ansible-playbook -i ansible/inventories/setup.yml ansible/deploy.yml
+          ansible-playbook -i ansible/inventories/setup.yml ansible/deploy.yml --private-key ~/.ssh/id_rsa
