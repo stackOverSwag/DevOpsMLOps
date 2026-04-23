@@ -25,21 +25,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image and push backend
+      - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
           context: ./simpleapi
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-simpleapi:latest
 
-      - name: Build image and push database
+      - name: Build and push database
         uses: docker/build-push-action@v6
         with:
           context: ./db
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tp-devops-database:latest
 
-      - name: Build image and push httpd
+      - name: Build and push httpd
         uses: docker/build-push-action@v6
         with:
           context: ./http-server
@@ -48,9 +48,8 @@ jobs:
 
 
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
-    runs-on: ubuntu-24.04
     needs: build-and-push-docker-image
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -61,17 +60,21 @@ jobs:
           sudo apt update
           sudo apt install -y ansible
 
+      # IMPORTANT: create SSH key correctly
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          touch ~/.ssh/known_hosts
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Disable host key checking
-        run: echo "ANSIBLE_HOST_KEY_CHECKING=False" >> $GITHUB_ENV
-
+      # Force Ansible to use correct key (no fallback issues)
       - name: Run Ansible deploy
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: "False"
         run: |
-          ansible-playbook -i ansible/inventories/setup.yml ansible/deploy.yml --private-key ~/.ssh/id_rsa
+          ansible-playbook \
+            -i ansible/inventories/setup.yml \
+            ansible/deploy.yml \
+            --private-key ~/.ssh/id_rsa \
+            -e "ansible_ssh_private_key_file=~/.ssh/id_rsa"
