@@ -1,0 +1,10 @@
+- name: Launch proxy container
+  community.docker.docker_container:
+    name: proxy
+    image: al24042/http-server:latest
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: app-network
+    published_ports:
+      - "80:80"

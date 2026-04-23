@@ -1,0 +1,4 @@
+- name: Create application docker network
+  community.docker.docker_network:
+    name: app-network
+    state: present

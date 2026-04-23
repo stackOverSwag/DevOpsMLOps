@@ -1,0 +1,28 @@
+- name: Create directory for database init scripts
+  file:
+    path: /opt/tp1/db/initdb
+    state: directory
+    mode: '0755'
+
+- name: Copy database init scripts to server
+  copy:
+    src: "{{ playbook_dir }}/../db/initdb/"
+    dest: /opt/tp1/db/initdb/
+    mode: '0644'
+
+- name: Launch PostgreSQL database container
+  community.docker.docker_container:
+    name: database
+    image: postgres:16
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: app-network
+    env:
+      POSTGRES_DB: db
+      POSTGRES_USER: usr
+      POSTGRES_PASSWORD: pwd
+    published_ports:
+      - "5432:5432"
+    volumes:
+      - /opt/tp1/db/initdb:/docker-entrypoint-initdb.d

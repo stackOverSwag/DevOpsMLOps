@@ -1,0 +1,14 @@
+- name: Launch application container
+  community.docker.docker_container:
+    name: backend
+    image: al24042/simpleapi:latest
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: app-network
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/db
+      SPRING_DATASOURCE_USERNAME: usr
+      SPRING_DATASOURCE_PASSWORD: pwd
+    published_ports:
+      - "8080:8080"
