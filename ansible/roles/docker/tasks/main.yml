@@ -1,52 +1,14 @@
-- name: Install required packages
-  apt:
+---
+- name: Ensure Docker is installed
+  ansible.builtin.apt:
     name:
-      - ca-certificates
-      - curl
-      - gnupg
-      - python3-pip
-      - python3-venv
-    state: present
-    update_cache: yes
-
-- name: Create docker keyrings directory
-  file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-
-- name: Add Docker GPG key
-  get_url:
-    url: https://download.docker.com/linux/debian/gpg
-    dest: /etc/apt/keyrings/docker.asc
-    mode: '0644'
-
-- name: Add Docker repository
-  apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-    state: present
-    update_cache: yes
-
-- name: Install Docker packages
-  apt:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
+      - docker.io
       - docker-compose-plugin
     state: present
+    update_cache: true
 
-- name: Create Python virtual environment for Docker SDK
-  command: python3 -m venv /opt/docker_venv
-  args:
-    creates: /opt/docker_venv
-
-- name: Install Docker SDK for Python in venv
-  command: /opt/docker_venv/bin/pip install docker
-
-- name: Ensure Docker service is running
-  service:
+- name: Ensure Docker service is enabled and started
+  ansible.builtin.service:
     name: docker
     state: started
-    enabled: yes
+    enabled: true

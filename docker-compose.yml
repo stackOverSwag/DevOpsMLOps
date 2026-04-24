@@ -41,6 +41,17 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  front:
+    build: ./front
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - front-network
+    expose:
+      - "80"
+    restart: unless-stopped
+
   httpd:
     build: ./http-server
     ports:
@@ -48,6 +59,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      front:
+        condition: service_started
     networks:
       - front-network
     restart: unless-stopped

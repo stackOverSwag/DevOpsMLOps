@@ -1,14 +1,22 @@
-- name: Launch application container
-  community.docker.docker_container:
-    name: backend
-    image: al24042/simpleapi:latest
-    state: started
-    restart_policy: unless-stopped
-    networks:
-      - name: app-network
-    env:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/db
-      SPRING_DATASOURCE_USERNAME: usr
-      SPRING_DATASOURCE_PASSWORD: pwd
-    published_ports:
-      - "8080:8080"
+---
+- name: Deploy app sources
+  ansible.builtin.copy:
+    src: app/
+    dest: /opt/app/
+    mode: "0755"
+
+- name: Build backend image
+  community.docker.docker_image:
+    name: tp1_docker_app-backend
+    build:
+      path: /opt/app/backend
+    source: build
+    force_source: true
+
+- name: Build frontend image
+  community.docker.docker_image:
+    name: tp1_docker_app-front
+    build:
+      path: /opt/app/front
+    source: build
+    force_source: true

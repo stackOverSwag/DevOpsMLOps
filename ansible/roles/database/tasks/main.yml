@@ -1,28 +1,21 @@
-- name: Create directory for database init scripts
-  file:
-    path: /opt/tp1/db/initdb
+---
+- name: Create database directory
+  ansible.builtin.file:
+    path: /opt/tp1/database
     state: directory
-    mode: '0755'
+    mode: "0755"
 
-- name: Copy database init scripts to server
-  copy:
-    src: "{{ playbook_dir }}/../db/initdb/"
-    dest: /opt/tp1/db/initdb/
-    mode: '0644'
-
-- name: Launch PostgreSQL database container
+- name: Start database container
   community.docker.docker_container:
     name: database
-    image: postgres:16
+    image: postgres:17
     state: started
     restart_policy: unless-stopped
-    networks:
-      - name: app-network
     env:
-      POSTGRES_DB: db
-      POSTGRES_USER: usr
-      POSTGRES_PASSWORD: pwd
-    published_ports:
-      - "5432:5432"
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
     volumes:
-      - /opt/tp1/db/initdb:/docker-entrypoint-initdb.d
+      - /opt/tp1/database:/var/lib/postgresql/data
+    networks:
+      - tp1_net

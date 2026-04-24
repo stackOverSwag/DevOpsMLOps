@@ -1,8 +1,12 @@
-- hosts: all
+---
+- name: Deploy TP1 Docker App
+  hosts: all
   become: true
+
   roles:
     - docker
     - network
     - database
     - app
+    - front
     - proxy

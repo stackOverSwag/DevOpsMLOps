@@ -1,11 +1,11 @@
 ---
-- name: Start Apache reverse proxy container
+- name: Start frontend container
   community.docker.docker_container:
-    name: httpd
-    image: tp1_docker_app-httpd
+    name: front
+    image: tp1_docker_app-front
     state: started
     restart_policy: unless-stopped
     ports:
-      - "80:80"
+      - "8081:80"
     networks:
       - tp1_net
